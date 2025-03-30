@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossref References Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --danger-color: #ea4335;
+            --warning-color: #fbbc05;
+            --light-gray: #f5f5f5;
+            --medium-gray: #e0e0e0;
+            --dark-gray: #757575;
+            --text-color: #212121;
+            --white: #ffffff;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-gray);
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--white);
+            box-shadow: var(--box-shadow);
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-weight: 500;
+            font-size: 28px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--medium-gray);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--dark-gray);
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: #3367d6;
+            box-shadow: var(--box-shadow);
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background-color: #2d9249;
+            box-shadow: var(--box-shadow);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            background-color: #d33426;
+            box-shadow: var(--box-shadow);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: var(--text-color);
+        }
+
+        .btn-warning:hover {
+            background-color: #e6ac04;
+            box-shadow: var(--box-shadow);
+        }
+
+        .references-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .reference-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .reference-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .reference-header {
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--medium-gray);
+            padding-bottom: 10px;
+        }
+
+        .reference-title {
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        .reference-authors {
+            color: var(--text-color);
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .reference-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--dark-gray);
+        }
+
+        .reference-doi {
+            color: var(--primary-color);
+            font-size: 13px;
+            word-break: break-all;
+            background-color: var(--light-gray);
+            padding: 5px 8px;
+            border-radius: 4px;
+            margin-top: auto;
+        }
+
+        .reference-doi a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .reference-doi a:hover {
+            text-decoration: underline;
+        }
+
+        .reference-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--dark-gray);
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: var(--medium-gray);
+        }
+
+        .status-bar {
+            background-color: var(--white);
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--box-shadow);
+        }
+
+        .status-count {
+            font-weight: 500;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--white);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        .reference-type {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .journal-article {
+            background-color: #4285f4;
+        }
+
+        .book-chapter {
+            background-color: #34a853;
+        }
+
+        .proceedings-article {
+            background-color: #fbbc05;
+        }
+
+        .book {
+            background-color: #ea4335;
+        }
+
+        .other {
+            background-color: #9e9e9e;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 5px;
+            }
+
+            .references-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <h1><i class="fas fa-book-open"></i> Crossref References Manager</h1>
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="fetchReferences()" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i> Refresh References
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('fetched')">
+                <i class="fas fa-download"></i> Fetched References
+            </div>
+            <div class="tab" onclick="showTab('saved')">
+                <i class="fas fa-bookmark"></i> Saved References
+            </div>
+            <div class="tab" onclick="showTab('pushed')">
+                <i class="fas fa-paper-plane"></i> Pushed References
+            </div>
+        </div>
+
+        <div id="fetchedTab" class="tab-content active">
+            <div class="status-bar">
+                <div class="status-count" id="fetchedCount">0 references fetched</div>
+                <button class="btn-success" onclick="saveAllReferences()">
+                    <i class="fas fa-save"></i> Save All
+                </button>
+            </div>
+            <div id="fetchedReferences" class="references-container">
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <h3>No references loaded</h3>
+                    <p>Click "Refresh References" to fetch citations</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="savedTab" class="tab-content">
+            <div class="status-bar">
+                <div class="status-count" id="savedCount">0 references saved</div>
+                <div>
+                    <button class="btn-success" onclick="pushSavedReferences()" id="pushBtn">
+                        <i class="fas fa-paper-plane"></i> Push All to Server
+                    </button>
+                    <button class="btn-danger" onclick="deleteAllSavedReferences()">
+                        <i class="fas fa-trash"></i> Delete All
+                    </button>
+                </div>
+            </div>
+            <div id="savedReferences" class="references-container">
+                <div class="empty-state">
+                    <i class="fas fa-bookmark"></i>
+                    <h3>No saved references</h3>
+                    <p>Save references from the Fetched tab to see them here</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="pushedTab" class="tab-content">
+            <div class="status-bar">
+                <div class="status-count" id="pushedCount">0 references pushed</div>
+                <button class="btn-danger" onclick="deleteAllPushedReferences()">
+                    <i class="fas fa-trash"></i> Delete All Pushed
+                </button>
+            </div>
+            <div id="pushedReferences" class="references-container">
+                <div class="empty-state">
+                    <i class="fas fa-paper-plane"></i>
+                    <h3>No pushed references</h3>
+                    <p>Push saved references to see them here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let fetchedReferences = [];
+        let savedReferences = [];
+        let pushedReferences = [];
+        let isLoading = false;
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchReferences();
+            fetchPushedReferences();
+        });
+
+        function showTab(tab) {
+            document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+            document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+            
+            document.getElementById(`${tab}Tab`).classList.add("active");
+            document.querySelector(`.tab:nth-child(${tab === "fetched" ? 1 : tab === "saved" ? 2 : 3})`).classList.add("active");
+        }
+
+        async function fetchReferences() {
+            if (isLoading) return;
+            
+            try {
+                isLoading = true;
+                const btn = document.getElementById('refreshBtn');
+                btn.innerHTML = '<div class="loading"></div> Loading...';
+                btn.disabled = true;
+
+                console.log("Fetching new references...");
+                const response = await fetch(`/fetch-references?t=${Date.now()}`);
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch references");
+                }
+
+                fetchedReferences = await response.json();
+                console.log("Fetched references:", fetchedReferences);
+
+                renderFetchedReferences();
+            } catch (error) {
+                console.error("Error fetching references", error);
+                showAlert('error', 'Failed to fetch references. Please try again.');
+            } finally {
+                isLoading = false;
+                const btn = document.getElementById('refreshBtn');
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh References';
+                btn.disabled = false;
+            }
+        }
+
+        function formatAuthors(authors) {
+            if (!authors || authors.length === 0) return 'No authors listed';
+            
+            const formattedAuthors = authors.slice(0, 3).map(a => {
+                if (a.given && a.family) {
+                    return `${a.given} ${a.family}`;
+                }
+                return a.name || 'Unknown author';
+            });
+            
+            if (authors.length > 3) {
+                formattedAuthors.push('et al.');
+            }
+            
+            return formattedAuthors.join(', ');
+        }
+
+        function formatDate(dateParts) {
+            if (!dateParts) return 'Date not available';
+            
+            const year = dateParts[0];
+            const month = dateParts[1] ? new Date(year, dateParts[1] - 1).toLocaleString('default', { month: 'short' }) : '';
+            const day = dateParts[2] ? dateParts[2] : '';
+            
+            return [day, month, year].filter(Boolean).join(' ');
+        }
+
+        function getReferenceTypeClass(type) {
+            if (!type) return 'other';
+            
+            const typeMap = {
+                'journal-article': 'journal-article',
+                'book-chapter': 'book-chapter',
+                'proceedings-article': 'proceedings-article',
+                'book': 'book',
+                'posted-content': 'other',
+                'component': 'other'
+            };
+            
+            return typeMap[type] || 'other';
+        }
+
+        function renderFetchedReferences() {
+            const container = document.getElementById("fetchedReferences");
+            
+            if (fetchedReferences.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>No references found</h3>
+                        <p>Try refreshing or check your search parameters</p>
+                    </div>
+                `;
+                document.getElementById('fetchedCount').textContent = '0 references fetched';
+                return;
+            }
+
+            container.innerHTML = '';
+            fetchedReferences.forEach(ref => {
+                const div = document.createElement("div");
+                div.classList.add("reference-card");
+                
+                const authors = ref.author ? formatAuthors(ref.author) : 'No authors listed';
+                const publishedDate = ref.created ? formatDate(ref.created['date-parts'][0]) : 
+                                    ref.issued ? formatDate(ref.issued['date-parts'][0]) : 
+                                    'Date not available';
+                const publisher = ref['container-title'] ? ref['container-title'][0] : 
+                                ref.publisher ? ref.publisher : 
+                                'Publisher not available';
+                const refType = ref.type ? ref.type.charAt(0).toUpperCase() + ref.type.slice(1) : 'Publication';
+                const typeClass = getReferenceTypeClass(ref.type);
+                
+                div.innerHTML = `
+                    <div class="reference-header">
+                        <span class="reference-type ${typeClass}">${refType}</span>
+                        <div class="reference-title">${ref.title ? ref.title[0] : "No Title"}</div>
+                        <div class="reference-authors">${authors}</div>
+                        <div class="reference-meta">
+                            <span class="meta-item"><i class="far fa-calendar-alt"></i> ${publishedDate}</span>
+                            <span class="meta-item"><i class="far fa-newspaper"></i> ${publisher}</span>
+                            ${ref.volume ? `<span class="meta-item"><i class="fas fa-book"></i> Vol. ${ref.volume}</span>` : ''}
+                            ${ref.issue ? `<span class="meta-item"><i class="fas fa-book-open"></i> Issue ${ref.issue}</span>` : ''}
+                            ${ref.page ? `<span class="meta-item"><i class="fas fa-file-alt"></i> pp. ${ref.page}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="reference-doi">
+                        <strong>DOI:</strong> <a href="https://doi.org/${ref.DOI}" target="_blank" rel="noopener noreferrer">${ref.DOI}</a>
+                    </div>
+                    <div class="reference-actions">
+                        <button class="btn-success" onclick="saveReference('${ref.DOI}')">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('fetchedCount').textContent = `${fetchedReferences.length} reference${fetchedReferences.length !== 1 ? 's' : ''} fetched`;
+        }
+
+        async function saveReference(DOI) {
+            const ref = fetchedReferences.find(r => r.DOI === DOI);
+            if (!ref) return;
+            
+            try {
+                const response = await fetch("/save-reference", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(ref),
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to save reference");
+                }
+                
+                savedReferences = await response.json();
+                renderSavedReferences();
+                showAlert('success', 'Reference saved successfully!');
+            } catch (error) {
+                console.error("Error saving reference:", error);
+                showAlert('error', 'Failed to save reference. Please try again.');
+            }
+        }
+
+        async function saveAllReferences() {
+            if (fetchedReferences.length === 0) {
+                showAlert('info', 'No references to save');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to save all ${fetchedReferences.length} references?`)) return;
+            
+            try {
+                const btn = document.getElementById('refreshBtn');
+                btn.innerHTML = '<div class="loading"></div> Saving...';
+                btn.disabled = true;
+                
+                const response = await fetch("/save-all-references", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(fetchedReferences),
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to save references");
+                }
+                
+                savedReferences = await response.json();
+                renderSavedReferences();
+                showAlert('success', `All ${fetchedReferences.length} references saved successfully!`);
+            } catch (error) {
+                console.error("Error saving references:", error);
+                showAlert('error', 'Failed to save references. Please try again.');
+            } finally {
+                const btn = document.getElementById('refreshBtn');
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh References';
+                btn.disabled = false;
+            }
+        }
+
+        function renderSavedReferences() {
+            const container = document.getElementById("savedReferences");
+            
+            if (savedReferences.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-bookmark"></i>
+                        <h3>No saved references</h3>
+                        <p>Save references from the Fetched tab to see them here</p>
+                    </div>
+                `;
+                document.getElementById('savedCount').textContent = '0 references saved';
+                return;
+            }
+
+            container.innerHTML = '';
+            savedReferences.forEach(ref => {
+                const div = document.createElement("div");
+                div.classList.add("reference-card");
+                
+                const authors = ref.author ? formatAuthors(ref.author) : 'No authors listed';
+                const publishedDate = ref.created ? formatDate(ref.created['date-parts'][0]) : 
+                                    ref.issued ? formatDate(ref.issued['date-parts'][0]) : 
+                                    'Date not available';
+                const publisher = ref['container-title'] ? ref['container-title'][0] : 
+                                ref.publisher ? ref.publisher : 
+                                'Publisher not available';
+                const refType = ref.type ? ref.type.charAt(0).toUpperCase() + ref.type.slice(1) : 'Publication';
+                const typeClass = getReferenceTypeClass(ref.type);
+                
+                div.innerHTML = `
+                    <div class="reference-header">
+                        <span class="reference-type ${typeClass}">${refType}</span>
+                        <div class="reference-title">${ref.title ? ref.title[0] : "No Title"}</div>
+                        <div class="reference-authors">${authors}</div>
+                        <div class="reference-meta">
+                            <span class="meta-item"><i class="far fa-calendar-alt"></i> ${publishedDate}</span>
+                            <span class="meta-item"><i class="far fa-newspaper"></i> ${publisher}</span>
+                            ${ref.volume ? `<span class="meta-item"><i class="fas fa-book"></i> Vol. ${ref.volume}</span>` : ''}
+                            ${ref.issue ? `<span class="meta-item"><i class="fas fa-book-open"></i> Issue ${ref.issue}</span>` : ''}
+                            ${ref.page ? `<span class="meta-item"><i class="fas fa-file-alt"></i> pp. ${ref.page}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="reference-doi">
+                        <strong>DOI:</strong> <a href="https://doi.org/${ref.DOI}" target="_blank" rel="noopener noreferrer">${ref.DOI}</a>
+                    </div>
+                    <div class="reference-actions">
+                        <button class="btn-danger" onclick="deleteSavedReference('${ref.DOI}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('savedCount').textContent = `${savedReferences.length} reference${savedReferences.length !== 1 ? 's' : ''} saved`;
+        }
+
+        async function deleteSavedReference(DOI) {
+            if (!confirm("Are you sure you want to delete this reference?")) return;
+            
+            try {
+                const response = await fetch("/delete-reference", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ DOI }),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to delete reference");
+                }
+
+                savedReferences = savedReferences.filter(ref => ref.DOI !== DOI);
+                renderSavedReferences();
+                showAlert('success', 'Reference deleted successfully!');
+            } catch (error) {
+                console.error("Error deleting saved reference:", error);
+                showAlert('error', 'Failed to delete reference. Please try again.');
+            }
+        }
+
+        async function deleteAllSavedReferences() {
+            if (savedReferences.length === 0) {
+                showAlert('info', 'No references to delete');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete all ${savedReferences.length} saved references?`)) return;
+            
+            try {
+                const btn = document.getElementById('pushBtn');
+                btn.innerHTML = '<div class="loading"></div> Deleting...';
+                btn.disabled = true;
+                
+                const response = await fetch("/delete-all-saved-references", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to delete references");
+                }
+
+                savedReferences = [];
+                renderSavedReferences();
+                showAlert('success', `All references deleted successfully!`);
+            } catch (error) {
+                console.error("Error deleting all saved references:", error);
+                showAlert('error', 'Failed to delete references. Please try again.');
+            } finally {
+                const btn = document.getElementById('pushBtn');
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Push All to Server';
+                btn.disabled = false;
+            }
+        }
+
+        async function pushSavedReferences() {
+            if (savedReferences.length === 0) {
+                showAlert('info', 'No references to push');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to push all ${savedReferences.length} saved references?`)) return;
+
+            try {
+                const btn = document.getElementById('pushBtn');
+                btn.innerHTML = '<div class="loading"></div> Pushing...';
+                btn.disabled = true;
+                
+                const response = await fetch("/push-references", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to push references");
+                }
+
+                const result = await response.json();
+                showAlert('success', result.message || `All ${savedReferences.length} references pushed successfully!`);
+
+                savedReferences = [];
+                renderSavedReferences();
+                await fetchPushedReferences();
+            } catch (error) {
+                console.error("Error pushing saved references:", error);
+                showAlert('error', 'Failed to push references. Please try again.');
+            } finally {
+                const btn = document.getElementById('pushBtn');
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Push All to Server';
+                btn.disabled = false;
+            }
+        }
+
+        async function fetchPushedReferences() {
+            try {
+                const response = await fetch("/get-pushed-references");
+                
+                if (!response.ok) {
+                    throw new Error("Failed to fetch pushed references");
+                }
+                
+                const data = await response.json();
+                pushedReferences = data;
+                renderPushedReferences();
+            } catch (error) {
+                console.error("Error fetching pushed references:", error);
+                showAlert('error', 'Failed to load pushed references. Please try again.');
+            }
+        }
+
+        function renderPushedReferences() {
+            const container = document.getElementById("pushedReferences");
+            
+            if (pushedReferences.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-paper-plane"></i>
+                        <h3>No pushed references</h3>
+                        <p>Push saved references to see them here</p>
+                    </div>
+                `;
+                document.getElementById('pushedCount').textContent = '0 references pushed';
+                return;
+            }
+
+            container.innerHTML = '';
+            pushedReferences.forEach(ref => {
+                const div = document.createElement("div");
+                div.classList.add("reference-card");
+                
+                const authors = ref.author ? formatAuthors(ref.author) : 'No authors listed';
+                const publishedDate = ref.created ? formatDate(ref.created['date-parts'][0]) : 
+                                    ref.issued ? formatDate(ref.issued['date-parts'][0]) : 
+                                    'Date not available';
+                const publisher = ref['container-title'] ? ref['container-title'][0] : 
+                                ref.publisher ? ref.publisher : 
+                                'Publisher not available';
+                const refType = ref.type ? ref.type.charAt(0).toUpperCase() + ref.type.slice(1) : 'Publication';
+                const typeClass = getReferenceTypeClass(ref.type);
+                
+                div.innerHTML = `
+                    <div class="reference-header">
+                        <span class="reference-type ${typeClass}">${refType}</span>
+                        <div class="reference-title">${ref.title ? ref.title[0] : "No Title"}</div>
+                        <div class="reference-authors">${authors}</div>
+                        <div class="reference-meta">
+                            <span class="meta-item"><i class="far fa-calendar-alt"></i> ${publishedDate}</span>
+                            <span class="meta-item"><i class="far fa-newspaper"></i> ${publisher}</span>
+                            ${ref.volume ? `<span class="meta-item"><i class="fas fa-book"></i> Vol. ${ref.volume}</span>` : ''}
+                            ${ref.issue ? `<span class="meta-item"><i class="fas fa-book-open"></i> Issue ${ref.issue}</span>` : ''}
+                            ${ref.page ? `<span class="meta-item"><i class="fas fa-file-alt"></i> pp. ${ref.page}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="reference-doi">
+                        <strong>DOI:</strong> <a href="https://doi.org/${ref.DOI}" target="_blank" rel="noopener noreferrer">${ref.DOI}</a>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('pushedCount').textContent = `${pushedReferences.length} reference${pushedReferences.length !== 1 ? 's' : ''} pushed`;
+        }
+
+        async function deleteAllPushedReferences() {
+            if (pushedReferences.length === 0) {
+                showAlert('info', 'No references to delete');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete all ${pushedReferences.length} pushed references?`)) return;
+
+            try {
+                const response = await fetch("/delete-all-pushed-references", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to delete pushed references");
+                }
+
+                const result = await response.json();
+                showAlert('success', result.message || `All ${pushedReferences.length} pushed references deleted successfully!`);
+
+                pushedReferences = [];
+                renderPushedReferences();
+            } catch (error) {
+                console.error("Error deleting all pushed references:", error);
+                showAlert('error', 'Failed to delete pushed references. Please try again.');
+            }
+        }
+
+        function showAlert(type, message) {
+            // In a real app, you might use a proper notification system
+            alert(`${type.toUpperCase()}: ${message}`);
+        }
+    </script>
+</body>
+</html>
