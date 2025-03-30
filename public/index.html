@@ -340,6 +340,15 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .btn-saved {
+    background-color: var(--dark-gray);
+    color: var(--white);
+}
+.btn-saved:hover {
+    background-color: #616161;
+    box-shadow: var(--box-shadow);
+}
     </style>
 </head>
 <body>
@@ -370,9 +379,6 @@
         <div id="fetchedTab" class="tab-content active">
             <div class="status-bar">
                 <div class="status-count" id="fetchedCount">0 references fetched</div>
-                <button class="btn-success" onclick="saveAllReferences()">
-                    <i class="fas fa-save"></i> Save All
-                </button>
             </div>
             <div id="fetchedReferences" class="references-container">
                 <div class="empty-state">
@@ -515,86 +521,106 @@
         }
 
         function renderFetchedReferences() {
-            const container = document.getElementById("fetchedReferences");
-            
-            if (fetchedReferences.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-search"></i>
-                        <h3>No references found</h3>
-                        <p>Try refreshing or check your search parameters</p>
-                    </div>
-                `;
-                document.getElementById('fetchedCount').textContent = '0 references fetched';
-                return;
-            }
+    const container = document.getElementById("fetchedReferences");
+    
+    if (fetchedReferences.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h3>No references found</h3>
+                <p>Try refreshing or check your search parameters</p>
+            </div>
+        `;
+        document.getElementById('fetchedCount').textContent = '0 references fetched';
+        return;
+    }
 
-            container.innerHTML = '';
-            fetchedReferences.forEach(ref => {
-                const div = document.createElement("div");
-                div.classList.add("reference-card");
-                
-                const authors = ref.author ? formatAuthors(ref.author) : 'No authors listed';
-                const publishedDate = ref.created ? formatDate(ref.created['date-parts'][0]) : 
-                                    ref.issued ? formatDate(ref.issued['date-parts'][0]) : 
-                                    'Date not available';
-                const publisher = ref['container-title'] ? ref['container-title'][0] : 
-                                ref.publisher ? ref.publisher : 
-                                'Publisher not available';
-                const refType = ref.type ? ref.type.charAt(0).toUpperCase() + ref.type.slice(1) : 'Publication';
-                const typeClass = getReferenceTypeClass(ref.type);
-                
-                div.innerHTML = `
-                    <div class="reference-header">
-                        <span class="reference-type ${typeClass}">${refType}</span>
-                        <div class="reference-title">${ref.title ? ref.title[0] : "No Title"}</div>
-                        <div class="reference-authors">${authors}</div>
-                        <div class="reference-meta">
-                            <span class="meta-item"><i class="far fa-calendar-alt"></i> ${publishedDate}</span>
-                            <span class="meta-item"><i class="far fa-newspaper"></i> ${publisher}</span>
-                            ${ref.volume ? `<span class="meta-item"><i class="fas fa-book"></i> Vol. ${ref.volume}</span>` : ''}
-                            ${ref.issue ? `<span class="meta-item"><i class="fas fa-book-open"></i> Issue ${ref.issue}</span>` : ''}
-                            ${ref.page ? `<span class="meta-item"><i class="fas fa-file-alt"></i> pp. ${ref.page}</span>` : ''}
-                        </div>
-                    </div>
-                    <div class="reference-doi">
-                        <strong>DOI:</strong> <a href="https://doi.org/${ref.DOI}" target="_blank" rel="noopener noreferrer">${ref.DOI}</a>
-                    </div>
-                    <div class="reference-actions">
-                        <button class="btn-success" onclick="saveReference('${ref.DOI}')">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
+    container.innerHTML = '';
+    fetchedReferences.forEach(ref => {
+        const div = document.createElement("div");
+        div.classList.add("reference-card");
+        
+        const authors = ref.author ? formatAuthors(ref.author) : 'No authors listed';
+        const publishedDate = ref.created ? formatDate(ref.created['date-parts'][0]) : 
+                            ref.issued ? formatDate(ref.issued['date-parts'][0]) : 
+                            'Date not available';
+        const publisher = ref['container-title'] ? ref['container-title'][0] : 
+                        ref.publisher ? ref.publisher : 
+                        'Publisher not available';
+        const refType = ref.type ? ref.type.charAt(0).toUpperCase() + ref.type.slice(1) : 'Publication';
+        const typeClass = getReferenceTypeClass(ref.type);
+        
+        // Check if this reference is already saved
+        const isSaved = savedReferences.some(savedRef => savedRef.DOI === ref.DOI);
+        
+        div.innerHTML = `
+            <div class="reference-header">
+                <span class="reference-type ${typeClass}">${refType}</span>
+                <div class="reference-title">${ref.title ? ref.title[0] : "No Title"}</div>
+                <div class="reference-authors">${authors}</div>
+                <div class="reference-meta">
+                    <span class="meta-item"><i class="far fa-calendar-alt"></i> ${publishedDate}</span>
+                    <span class="meta-item"><i class="far fa-newspaper"></i> ${publisher}</span>
+                    ${ref.volume ? `<span class="meta-item"><i class="fas fa-book"></i> Vol. ${ref.volume}</span>` : ''}
+                    ${ref.issue ? `<span class="meta-item"><i class="fas fa-book-open"></i> Issue ${ref.issue}</span>` : ''}
+                    ${ref.page ? `<span class="meta-item"><i class="fas fa-file-alt"></i> pp. ${ref.page}</span>` : ''}
+                </div>
+            </div>
+            <div class="reference-doi">
+                <strong>DOI:</strong> <a href="https://doi.org/${ref.DOI}" target="_blank" rel="noopener noreferrer">${ref.DOI}</a>
+            </div>
+            <div class="reference-actions">
+                <button class="${isSaved ? 'btn-saved' : 'btn-success'}" 
+                        onclick="${isSaved ? '' : `saveReference('${ref.DOI}')`}">
+                    <i class="fas fa-${isSaved ? 'check' : 'save'}"></i> ${isSaved ? 'Saved' : 'Save'}
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
 
-            document.getElementById('fetchedCount').textContent = `${fetchedReferences.length} reference${fetchedReferences.length !== 1 ? 's' : ''} fetched`;
-        }
+    document.getElementById('fetchedCount').textContent = `${fetchedReferences.length} reference${fetchedReferences.length !== 1 ? 's' : ''} fetched`;
+}
 
         async function saveReference(DOI) {
-            const ref = fetchedReferences.find(r => r.DOI === DOI);
-            if (!ref) return;
-            
-            try {
-                const response = await fetch("/save-reference", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(ref),
-                });
-                
-                if (!response.ok) {
-                    throw new Error("Failed to save reference");
-                }
-                
-                savedReferences = await response.json();
-                renderSavedReferences();
-                showAlert('success', 'Reference saved successfully!');
-            } catch (error) {
-                console.error("Error saving reference:", error);
-                showAlert('error', 'Failed to save reference. Please try again.');
-            }
+    const ref = fetchedReferences.find(r => r.DOI === DOI);
+    if (!ref) return;
+    
+    // Find the button and update it immediately
+    const buttons = document.querySelectorAll(`button[onclick="saveReference('${DOI}')"]`);
+    buttons.forEach(btn => {
+        btn.innerHTML = '<i class="fas fa-check"></i> Saved';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-saved');
+        btn.onclick = null; // Remove the click handler
+    });
+    
+    try {
+        const response = await fetch("/save-reference", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(ref),
+        });
+        
+        if (!response.ok) {
+            throw new Error("Failed to save reference");
         }
+        
+        savedReferences = await response.json();
+        renderSavedReferences();
+        showAlert('success', 'Reference saved successfully!');
+    } catch (error) {
+        console.error("Error saving reference:", error);
+        // Revert the button if there's an error
+        buttons.forEach(btn => {
+            btn.innerHTML = '<i class="fas fa-save"></i> Save';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-saved');
+            btn.onclick = () => saveReference(DOI);
+        });
+        showAlert('error', 'Failed to save reference. Please try again.');
+    }
+}
 
         async function saveAllReferences() {
             if (fetchedReferences.length === 0) {
