@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synchronized References</title>
+</head>
+<body>
+    <h1>Latest Cannabis Research References</h1>
+    <div id="references-container"></div>
+    <p>References rotate every 10 seconds. All users see the same references at the same time.</p>
+
+    <script>
+        const API_URL = 'http://localhost:3000/references';
+        const UPDATE_INTERVAL = 5000; // Check for updates every 5 seconds
+        
+        const container = document.getElementById('references-container');
+        
+        function displayReferences(references) {
+            if (references.length === 0) {
+                container.innerHTML = '<p>Loading references...</p>';
+                return;
+            }
+            
+            let html = '<ul>';
+            references.forEach(ref => {
+                html += `
+                    <li>
+                        <strong>${ref.title}</strong><br>
+                        Authors: ${ref.author}<br>
+                        Year: ${ref.year}<br>
+                        DOI: ${ref.doi}
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            
+            container.innerHTML = html;
+        }
+        
+        async function fetchReferences() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                displayReferences(data);
+            } catch (error) {
+                console.error('Error fetching references:', error);
+                container.innerHTML = '<p>Error loading references. Please try again later.</p>';
+            }
+        }
+        
+        // Initial fetch
+        fetchReferences();
+        
+        // Set up periodic updates
+        setInterval(fetchReferences, UPDATE_INTERVAL);
+    </script>
+</body>
+</html>
