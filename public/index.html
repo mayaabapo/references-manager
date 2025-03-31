@@ -1,5 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+    <script>
+        // Check if user is logged in
+        fetch('/check-auth')
+            .then(response => {
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                }
+            })
+            .catch(() => {
+                window.location.href = '/login.html';
+            });
+    </script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
