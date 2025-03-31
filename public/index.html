@@ -716,62 +716,97 @@
         }
 
         async function deleteSavedReference(DOI) {
-            if (!confirm("Are you sure you want to delete this reference?")) return;
-            
-            try {
-                const response = await fetch("/delete-reference", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ DOI }),
-                });
+    if (!confirm("Are you sure you want to delete this reference?")) return;
+    
+    try {
+        const response = await fetch("/delete-reference", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ DOI }),
+        });
 
-                if (!response.ok) {
-                    throw new Error("Failed to delete reference");
-                }
-
-                savedReferences = savedReferences.filter(ref => ref.DOI !== DOI);
-                renderSavedReferences();
-                showAlert('success', 'Reference deleted successfully!');
-            } catch (error) {
-                console.error("Error deleting saved reference:", error);
-                showAlert('error', 'Failed to delete reference. Please try again.');
-            }
+        if (!response.ok) {
+            throw new Error("Failed to delete reference");
         }
 
-        async function deleteAllSavedReferences() {
-            if (savedReferences.length === 0) {
-                showAlert('info', 'No references to delete');
-                return;
-            }
-            
-            if (!confirm(`Are you sure you want to delete all ${savedReferences.length} saved references?`)) return;
-            
-            try {
-                const btn = document.getElementById('pushBtn');
-                btn.innerHTML = '<div class="loading"></div> Deleting...';
-                btn.disabled = true;
-                
-                const response = await fetch("/delete-all-saved-references", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                });
-
-                if (!response.ok) {
-                    throw new Error("Failed to delete references");
+        savedReferences = savedReferences.filter(ref => ref.DOI !== DOI);
+        renderSavedReferences();
+        
+        // Update the corresponding reference in the fetched tab
+        const refExistsInFetched = fetchedReferences.some(ref => ref.DOI === DOI);
+        if (refExistsInFetched) {
+            // Find all buttons for this DOI in the fetched tab and reset them
+            const buttons = document.querySelectorAll(`button[onclick="saveReference('${DOI}')"]`);
+            buttons.forEach(btn => {
+                if (btn.classList.contains('btn-saved')) {
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save';
+                    btn.classList.remove('btn-saved');
+                    btn.classList.add('btn-success');
+                    btn.onclick = () => saveReference(DOI);
                 }
-
-                savedReferences = [];
-                renderSavedReferences();
-                showAlert('success', `All references deleted successfully!`);
-            } catch (error) {
-                console.error("Error deleting all saved references:", error);
-                showAlert('error', 'Failed to delete references. Please try again.');
-            } finally {
-                const btn = document.getElementById('pushBtn');
-                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Push All to Server';
-                btn.disabled = false;
-            }
+            });
         }
+        
+        showAlert('success', 'Reference deleted successfully!');
+    } catch (error) {
+        console.error("Error deleting saved reference:", error);
+        showAlert('error', 'Failed to delete reference. Please try again.');
+    }
+}
+
+async function deleteAllSavedReferences() {
+    if (savedReferences.length === 0) {
+        showAlert('info', 'No references to delete');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete all ${savedReferences.length} saved references?`)) return;
+    
+    try {
+        const btn = document.getElementById('pushBtn');
+        btn.innerHTML = '<div class="loading"></div> Deleting...';
+        btn.disabled = true;
+        
+        const response = await fetch("/delete-all-saved-references", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to delete references");
+        }
+
+        // Before clearing, get all DOIs that were saved
+        const deletedDOIs = savedReferences.map(ref => ref.DOI);
+        savedReferences = [];
+        renderSavedReferences();
+        
+        // Reset all corresponding buttons in the fetched tab
+        deletedDOIs.forEach(DOI => {
+            const refExistsInFetched = fetchedReferences.some(ref => ref.DOI === DOI);
+            if (refExistsInFetched) {
+                const buttons = document.querySelectorAll(`button[onclick="saveReference('${DOI}')"]`);
+                buttons.forEach(btn => {
+                    if (btn.classList.contains('btn-saved')) {
+                        btn.innerHTML = '<i class="fas fa-save"></i> Save';
+                        btn.classList.remove('btn-saved');
+                        btn.classList.add('btn-success');
+                        btn.onclick = () => saveReference(DOI);
+                    }
+                });
+            }
+        });
+        
+        showAlert('success', 'All references deleted successfully!');
+    } catch (error) {
+        console.error("Error deleting all saved references:", error);
+        showAlert('error', 'Failed to delete references. Please try again.');
+    } finally {
+        const btn = document.getElementById('pushBtn');
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Push All to Server';
+        btn.disabled = false;
+    }
+}
 
         async function pushSavedReferences() {
             if (savedReferences.length === 0) {
@@ -882,33 +917,50 @@
         }
 
         async function deleteAllPushedReferences() {
-            if (pushedReferences.length === 0) {
-                showAlert('info', 'No references to delete');
-                return;
-            }
-            
-            if (!confirm(`Are you sure you want to delete all ${pushedReferences.length} pushed references?`)) return;
+    if (pushedReferences.length === 0) {
+        showAlert('info', 'No references to delete');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete all ${pushedReferences.length} pushed references?`)) return;
 
-            try {
-                const response = await fetch("/delete-all-pushed-references", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                });
+    try {
+        const response = await fetch("/delete-all-pushed-references", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
 
-                if (!response.ok) {
-                    throw new Error("Failed to delete pushed references");
-                }
-
-                const result = await response.json();
-                showAlert('success', result.message || `All ${pushedReferences.length} pushed references deleted successfully!`);
-
-                pushedReferences = [];
-                renderPushedReferences();
-            } catch (error) {
-                console.error("Error deleting all pushed references:", error);
-                showAlert('error', 'Failed to delete pushed references. Please try again.');
-            }
+        if (!response.ok) {
+            throw new Error("Failed to delete pushed references");
         }
+
+        // Store the DOIs before clearing
+        const deletedDOIs = pushedReferences.map(ref => ref.DOI);
+        pushedReferences = [];
+        renderPushedReferences();
+        
+        // Reset corresponding buttons in the fetched tab if they exist
+        deletedDOIs.forEach(DOI => {
+            const refExistsInFetched = fetchedReferences.some(ref => ref.DOI === DOI);
+            if (refExistsInFetched) {
+                const buttons = document.querySelectorAll(`button[onclick="saveReference('${DOI}')"]`);
+                buttons.forEach(btn => {
+                    if (btn.classList.contains('btn-saved')) {
+                        btn.innerHTML = '<i class="fas fa-save"></i> Save';
+                        btn.classList.remove('btn-saved');
+                        btn.classList.add('btn-success');
+                        btn.onclick = () => saveReference(DOI);
+                    }
+                });
+            }
+        });
+
+        showAlert('success', `All ${deletedDOIs.length} pushed references deleted successfully!`);
+    } catch (error) {
+        console.error("Error deleting all pushed references:", error);
+        showAlert('error', 'Failed to delete pushed references. Please try again.');
+    }
+}
 
         function showAlert(type, message) {
             // In a real app, you might use a proper notification system

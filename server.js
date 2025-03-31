@@ -25,6 +25,12 @@ app.get("/fetch-references", async (req, res) => {
     }
 });
 
+app.post("/delete-all-saved-references", (req, res) => {
+    savedReferences = []; // Clear the saved references
+    console.log("All saved references have been deleted!"); // Debugging log
+    res.json({ success: true, message: "All saved references deleted!" });
+});
+
 
 
 // Save a reference
