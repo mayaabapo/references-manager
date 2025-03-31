@@ -145,11 +145,12 @@ app.post("/delete-all-pushed-references", checkAuth, (req, res) => {
     res.json({ success: true, message: "All pushed references deleted" });
 });
 
-// Redirect root to login if not authenticated
+// With this:
 app.get("/", (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login.html');
-    }
+    res.redirect('/login.html');
+});
+
+app.get("/index.html", checkAuth, (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
 
