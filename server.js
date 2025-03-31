@@ -136,6 +136,12 @@ app.post("/push-references", checkAuth, async (req, res) => {
     }
 });
 
+// Add this before protected route
+app.get("/public/pushed-references", (req, res) => {
+    res.json(pushedReferences); // No authentication
+});
+
+// Keep existing protected route
 app.get("/get-pushed-references", checkAuth, (req, res) => {
     res.json(pushedReferences);
 });
@@ -165,7 +171,5 @@ app.listen(PORT, () => {
     users.forEach(user => {
         console.log(`- Username: ${user.username} | Password: ${user.password.replace(/./g, '*')}`);
     });
-    console.log(`Demo credentials:`);
-    console.log(`- admin / admin123`);
-    console.log(`- user / user123`);
+    console.log(`Demo login:`);
 });
